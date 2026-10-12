@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gradients of Perpendicular Lines</title>
+<style>
+:root{
+  --bg:#f7f8fa;--card:#fff;--text:#17202a;--muted:#5f6b76;--border:#d8dde3;
+  --accent:#1769aa;--ab:#7b5ea7;--bc:#2a8f6a;--grid:#e7e9ed;--axis:#87919b
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+main{max-width:1000px;margin:auto;padding:20px}
+h1{font-size:1.55rem;margin:0 0 6px}h2{font-size:1.05rem;margin:0 0 10px}
+p{line-height:1.45}.lead{margin:0 0 16px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px}
+.graph-wrap{overflow:auto}
+svg{display:block;width:100%;height:auto;min-width:520px;background:#fff;border-radius:10px;touch-action:none}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.stat{border:1px solid var(--border);border-radius:10px;padding:10px}
+.stat strong{display:block;font-size:.83rem;color:var(--muted);margin-bottom:3px}
+.stat span{font-size:1.02rem;font-weight:700}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+button{border:1px solid var(--border);background:white;color:var(--text);border-radius:9px;padding:9px 12px;font-size:1rem;cursor:pointer}
+button.primary{background:var(--accent);color:white;border-color:var(--accent)}
+.below{margin-top:16px}
+.coord-grid{display:grid;grid-template-columns:auto 1fr 1fr;gap:6px 8px;align-items:center;max-width:430px}
+.coord-grid input{width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:1rem}
+.coord-grid .hdr{font-size:.82rem;color:var(--muted);font-weight:700;text-align:center}
+.point-label{font-weight:700}
+.checkrow{display:flex;align-items:center;gap:8px;margin-top:10px}.checkrow input{width:20px;height:20px}
+.small{font-size:.9rem;color:var(--muted)}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:.86rem;min-width:580px}
+th,td{border:1px solid var(--border);padding:7px;text-align:center;white-space:nowrap}th{background:#f2f4f6}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin:6px 0 10px;font-size:.9rem}
+.legend span{display:inline-flex;align-items:center;gap:6px}.swatch{width:20px;height:4px;border-radius:2px}
+@media(max-width:760px){.stats{grid-template-columns:1fr 1fr}main{padding:12px}}
+@media(max-width:420px){.stats{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+<h1>Gradients of Perpendicular Lines</h1>
+<p class="lead">Move points <strong>A</strong>, <strong>B</strong> and <strong>C</strong>. The full line through A and B and the full line through B and C are shown.</p>
+
+<section class="card">
+<h2>Interactive coordinate plane</h2>
+<div class="legend">
+  <span><i class="swatch" style="background:#7b5ea7"></i> Line AB</span>
+  <span><i class="swatch" style="background:#2a8f6a"></i> Line BC</span>
+  <span>⋯ Gradient triangles</span>
+</div>
+
+<div class="graph-wrap"><svg id="plot" viewBox="0 0 720 720" aria-label="Coordinate plane showing full lines AB and BC, draggable points and dotted gradient triangles"></svg></div>
+
+<div class="stats" aria-live="polite">
+  <div class="stat"><strong>Gradient of line AB (mAB)</strong><span id="mAB">—</span></div>
+  <div class="stat"><strong>Gradient of line BC (mBC)</strong><span id="mBC">—</span></div>
+  <div class="stat"><strong>Product mAB × mBC</strong><span id="prod">hidden</span></div>
+  <div class="stat"><strong>Angle ABC</strong><span id="angle">—</span></div>
+</div>
+
+<div class="controls">
+  <button id="toggleProduct" type="button">Reveal product</button>
+  <button id="record" class="primary" type="button">Record this case</button>
+  <button id="reset" type="button">Reset points</button>
+</div>
+
+<div class="below">
+  <h2>Coordinates</h2>
+  <p class="small">Drag any point, or enter coordinates directly.</p>
+  <div class="coord-grid">
+    <div></div><div class="hdr">x</div><div class="hdr">y</div>
+    <div class="point-label">A</div><input id="Ax" type="number" min="-10" max="10" step="1"><input id="Ay" type="number" min="-10" max="10" step="1">
+    <div class="point-label">B</div><input id="Bx" type="number" min="-10" max="10" step="1"><input id="By" type="number" min="-10" max="10" step="1">
+    <div class="point-label">C</div><input id="Cx" type="number" min="-10" max="10" step="1"><input id="Cy" type="number" min="-10" max="10" step="1">
+  </div>
+  <label class="checkrow"><input id="snap" type="checkbox" checked> Snap dragged points to integer coordinates</label>
+
+  <h2 style="margin-top:20px">Recorded cases</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>A</th><th>B</th><th>C</th><th>mAB</th><th>mBC</th></tr></thead>
+      <tbody id="records"><tr><td colspan="6" class="small">No cases recorded yet.</td></tr></tbody>
+    </table>
+  </div>
+</div>
+</section>
+</main>
+
+<script>
+(() => {
+const svg=document.getElementById('plot'),NS='http://www.w3.org/2000/svg';
+const W=720,H=720,pad=40,min=-10,max=10,span=20;
+const state={A:{x:-6,y:-1},B:{x:0,y:2},C:{x:3,y:-4},showProduct:false,drag:null,records:[]};
+const ids=['A','B','C'];
+const clamp=v=>Math.max(min,Math.min(max,v));
+const sx=x=>pad+(x-min)/span*(W-2*pad);
+const sy=y=>H-pad-(y-min)/span*(H-2*pad);
+const invX=p=>min+(p-pad)/(W-2*pad)*span;
+const invY=p=>min+(H-pad-p)/(H-2*pad)*span;
+
+function E(n,a={}){const e=document.createElementNS(NS,n);Object.entries(a).forEach(([k,v])=>e.setAttribute(k,v));return e}
+function slope(P,Q){const dx=Q.x-P.x;return Math.abs(dx)<1e-10?null:(Q.y-P.y)/dx}
+function fmt(v){if(v===null)return'undefined';return String(Math.round(v*1000)/1000)}
+function coord(P){return '('+fmt(P.x)+', '+fmt(P.y)+')'}
+function angleABC(){
+  const u={x:state.A.x-state.B.x,y:state.A.y-state.B.y},v={x:state.C.x-state.B.x,y:state.C.y-state.B.y};
+  const a=Math.hypot(u.x,u.y),b=Math.hypot(v.x,v.y);if(!a||!b)return null;
+  let c=(u.x*v.x+u.y*v.y)/(a*b);c=Math.max(-1,Math.min(1,c));
+  return Math.acos(c)*180/Math.PI;
+}
+
+function clippedLine(P,Q){
+  const dx=Q.x-P.x,dy=Q.y-P.y;if(Math.abs(dx)<1e-10&&Math.abs(dy)<1e-10)return null;
+  const pts=[];const add=(x,y)=>{if(x>=min-1e-8&&x<=max+1e-8&&y>=min-1e-8&&y<=max+1e-8&&!pts.some(p=>Math.hypot(p.x-x,p.y-y)<1e-6))pts.push({x,y})};
+  if(Math.abs(dx)>1e-10){let t=(min-P.x)/dx;add(min,P.y+t*dy);t=(max-P.x)/dx;add(max,P.y+t*dy)}
+  if(Math.abs(dy)>1e-10){let t=(min-P.y)/dy;add(P.x+t*dx,min);t=(max-P.y)/dy;add(P.x+t*dx,max)}
+  return pts.length>=2?[pts[0],pts[1]]:null;
+}
+function drawInfinite(P,Q,color){
+  const pts=clippedLine(P,Q);if(!pts)return;
+  svg.appendChild(E('line',{x1:sx(pts[0].x),y1:sy(pts[0].y),x2:sx(pts[1].x),y2:sy(pts[1].y),stroke:color,'stroke-width':5,'stroke-linecap':'round'}));
+}
+function drawGradientTriangle(P,Q,color,below=false){
+  if(Math.abs(P.x-Q.x)<1e-10 || Math.abs(P.y-Q.y)<1e-10) return;
+  let R;
+  if(below){
+    R = (P.y <= Q.y) ? {x:Q.x,y:P.y} : {x:P.x,y:Q.y};
+  } else {
+    R={x:Q.x,y:P.y};
+  }
+  const attrs={stroke:color,'stroke-width':2.4,'stroke-dasharray':'7 6',fill:'none',opacity:0.95};
+  svg.appendChild(E('line',{x1:sx(P.x),y1:sy(P.y),x2:sx(R.x),y2:sy(R.y),...attrs}));
+  svg.appendChild(E('line',{x1:sx(R.x),y1:sy(R.y),x2:sx(Q.x),y2:sy(Q.y),...attrs}));
+}
+function updateReadouts(){
+  const m1=slope(state.A,state.B),m2=slope(state.B,state.C),a=angleABC(),p=(m1===null||m2===null)?null:m1*m2;
+  document.getElementById('mAB').textContent=fmt(m1);
+  document.getElementById('mBC').textContent=fmt(m2);
+  document.getElementById('prod').textContent=state.showProduct?(p===null?'not defined':fmt(p)):'hidden';
+  document.getElementById('angle').textContent=a===null?'not defined':Math.round(a*10)/10+'°';
+}
+function draw(){
+  svg.innerHTML='';
+  for(let i=min;i<=max;i++){
+    const major=i===0;
+    svg.appendChild(E('line',{x1:sx(i),y1:sy(min),x2:sx(i),y2:sy(max),stroke:major?'#87919b':'#e7e9ed','stroke-width':major?2:1}));
+    svg.appendChild(E('line',{x1:sx(min),y1:sy(i),x2:sx(max),y2:sy(i),stroke:major?'#87919b':'#e7e9ed','stroke-width':major?2:1}));
+  }
+
+  drawInfinite(state.A,state.B,'#7b5ea7');
+  drawInfinite(state.B,state.C,'#2a8f6a');
+  drawGradientTriangle(state.A,state.B,'#7b5ea7',true);
+  drawGradientTriangle(state.B,state.C,'#2a8f6a',true);
+
+  ids.forEach(id=>{
+    const P=state[id],color=id==='A'?'#7b5ea7':id==='B'?'#1769aa':'#2a8f6a';
+    const g=E('g',{'data-p':id});
+    const c=E('circle',{cx:sx(P.x),cy:sy(P.y),r:11,fill:color,stroke:'#fff','stroke-width':3});
+    const t=E('text',{x:sx(P.x)+14,y:sy(P.y)-16,'font-size':16,'font-weight':700,fill:'#17202a'});
+    t.textContent=id+' '+coord(P);
+    g.append(c,t);svg.appendChild(g);
+  });
+  updateReadouts();
+}
+function updateInputs(){ids.forEach(id=>{document.getElementById(id+'x').value=state[id].x;document.getElementById(id+'y').value=state[id].y})}
+function pointerCoords(e){
+  const r=svg.getBoundingClientRect();let x=clamp(invX((e.clientX-r.left)*W/r.width)),y=clamp(invY((e.clientY-r.top)*H/r.height));
+  if(document.getElementById('snap').checked){x=Math.round(x);y=Math.round(y)}
+  return{x,y}
+}
+svg.addEventListener('pointerdown',e=>{const g=e.target.closest('[data-p]');if(!g)return;state.drag=g.getAttribute('data-p');svg.setPointerCapture(e.pointerId)});
+svg.addEventListener('pointermove',e=>{if(!state.drag)return;state[state.drag]=pointerCoords(e);updateInputs();draw()});
+['pointerup','pointercancel'].forEach(ev=>svg.addEventListener(ev,e=>{state.drag=null;try{svg.releasePointerCapture(e.pointerId)}catch(_){}}));
+
+ids.forEach(id=>['x','y'].forEach(axis=>{
+  const inp=document.getElementById(id+axis);
+  inp.addEventListener('change',()=>{let v=Number(inp.value);if(!Number.isFinite(v))v=state[id][axis];state[id][axis]=clamp(v);updateInputs();draw()});
+}));
+
+document.getElementById('toggleProduct').addEventListener('click',e=>{
+  state.showProduct=!state.showProduct;
+  e.currentTarget.textContent=state.showProduct?'Hide product':'Reveal product';
+  updateReadouts();
+});
+document.getElementById('reset').addEventListener('click',()=>{
+  state.A={x:-6,y:-1};state.B={x:0,y:2};state.C={x:3,y:-4};
+  state.showProduct=false;
+  document.getElementById('toggleProduct').textContent='Reveal product';
+  updateInputs();draw();
+});
+document.getElementById('record').addEventListener('click',()=>{
+  const m1=slope(state.A,state.B),m2=slope(state.B,state.C);
+  state.records.push({A:{...state.A},B:{...state.B},C:{...state.C},m1,m2});
+  if(state.records.length>10)state.records.shift();
+  const tb=document.getElementById('records');tb.innerHTML='';
+  state.records.forEach((r,i)=>{
+    const tr=document.createElement('tr');
+    [i+1,coord(r.A),coord(r.B),coord(r.C),fmt(r.m1),fmt(r.m2)].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td)});
+    tb.appendChild(tr);
+  });
+});
+updateInputs();draw();
+})();
+</script>
+</body>
+</html>
