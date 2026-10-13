@@ -15,9 +15,9 @@ main{max-width:1000px;margin:auto;padding:20px}
 h1{font-size:1.55rem;margin:0 0 6px}h2{font-size:1.05rem;margin:0 0 10px}
 p{line-height:1.45}.lead{margin:0 0 16px;color:var(--muted)}
 .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px}
-.graph-wrap{overflow:auto}
-svg{display:block;width:100%;height:auto;min-width:520px;background:#fff;border-radius:10px;touch-action:none}
-.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.graph-wrap{overflow:auto;max-width:650px;margin:0 auto}
+svg{display:block;width:100%;height:auto;min-width:460px;background:#fff;border-radius:10px;touch-action:none}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.angle-row{display:flex;justify-content:flex-start;margin:8px 0 12px}.angle-stat{min-width:220px;max-width:280px}.gradient-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
 .stat{border:1px solid var(--border);border-radius:10px;padding:10px}
 .stat strong{display:block;font-size:.83rem;color:var(--muted);margin-bottom:3px}
 .stat span{font-size:1.02rem;font-weight:700}
@@ -43,23 +43,25 @@ th,td{border:1px solid var(--border);padding:7px;text-align:center;white-space:n
 <body>
 <main>
 <h1>Gradients of Perpendicular Lines</h1>
-<p class="lead">Move points <strong>A</strong>, <strong>B</strong> and <strong>C</strong>. The full line through A and B and the full line through B and C are shown.</p>
+<p class="lead">Move points <em>A</em>, <em>B</em> and <em>C</em> such that the two lines <em>AB</em> and <em>BC</em> are perpendicular.</p>
 
 <section class="card">
-<h2>Interactive coordinate plane</h2>
 <div class="legend">
   <span><i class="swatch" style="background:#7b5ea7"></i> Line AB</span>
   <span><i class="swatch" style="background:#2a8f6a"></i> Line BC</span>
   <span>⋯ Gradient triangles</span>
 </div>
 
+<div class="angle-row" aria-live="polite">
+  <div class="stat angle-stat"><strong>Angle ABC</strong><span id="angle">—</span></div>
+</div>
+
 <div class="graph-wrap"><svg id="plot" viewBox="0 0 720 720" aria-label="Coordinate plane showing full lines AB and BC, draggable points and dotted gradient triangles"></svg></div>
 
-<div class="stats" aria-live="polite">
+<div class="gradient-stats" aria-live="polite">
   <div class="stat"><strong>Gradient of line AB (mAB)</strong><span id="mAB">—</span></div>
   <div class="stat"><strong>Gradient of line BC (mBC)</strong><span id="mBC">—</span></div>
   <div class="stat"><strong>Product mAB × mBC</strong><span id="prod">hidden</span></div>
-  <div class="stat"><strong>Angle ABC</strong><span id="angle">—</span></div>
 </div>
 
 <div class="controls">
